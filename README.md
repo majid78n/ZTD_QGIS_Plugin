@@ -274,4 +274,4 @@ the DEM download, projection and raster writing using QGIS’s own Python:
 ## Author
 
 **Rohollah Naeijian** — rohollah.naeijian@mail.polimi.it
-Developed for the **Geoinformatics Project** course, **Politecnico di Milano**.
+Developed for the **Geoinformatics Project** , **Politecnico di Milano**.
