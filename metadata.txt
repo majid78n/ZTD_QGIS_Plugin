@@ -1,0 +1,16 @@
+[general]
+name=ZTD-AITD Map Generator
+qgisMinimumVersion=3.22
+description=Generate Zenith Tropospheric Delay (ZTD) maps from GNSS observations using the (Augmented) Iterative Tropospheric Decomposition strategy.
+about=Reads GNSS ZTD observations from a CSV/tabular file (lon, lat, height, ZTD), automatically downloads a matching DEM (keyless AWS Terrain Tiles) or uses a local one, and interpolates dense ZTD maps with the ITD and Augmented ITD (AITD) methods. Outputs four rasters: ZTD map, stratified component, turbulent component and DEM. Implements Song, Venuti, Monti-Guarnieri & Manzoni (2025), Environmental Modelling and Software 194, 106669. Developed by Rohollah Naeijian for the Geoinformatics Project course at Politecnico di Milano.
+version=1.0.0
+author=Rohollah Naeijian
+email=rohollah.naeijian@mail.polimi.it
+tracker=https://github.com/majid78n/ZTD_QGIS_Plugin/issues
+repository=https://github.com/majid78n/ZTD_QGIS_Plugin
+homepage=https://github.com/majid78n/ZTD_QGIS_Plugin
+category=Raster
+icon=icon.png
+experimental=False
+deprecated=False
+tags=GNSS,ZTD,troposphere,InSAR,interpolation,DEM,water vapor,GACOS,AITD

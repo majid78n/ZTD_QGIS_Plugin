@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# QGIS / editor local settings
+.claude/
+*.qgz~
+*.qgs~
+
+# Plugin run outputs (generated rasters / vectors / scratch)
+sample_data/_out/
+tests/_*_out/
+*.tif
+*.tif.aux.xml
+*.tif.ovr
+*.gpkg
+*.gpkg-wal
+*.gpkg-shm
+
+# but keep the plugin icon (PNG) and the sample CSV
+!icon.png
