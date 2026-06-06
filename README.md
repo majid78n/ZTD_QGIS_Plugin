@@ -65,6 +65,13 @@ radius: `α = r_G² / 99`.
   [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) open dataset
   (no API key, no registration). Or use a **local DEM** file, or a **DEM already
   loaded in QGIS**.
+- **Ellipsoidal → mean-sea-level height conversion** (optional) — GNSS station
+  heights are usually *ellipsoidal* (above the WGS-84 ellipsoid) while DEM
+  elevations are *orthometric* (above mean sea level). Tick the option to
+  subtract the geoid undulation (`H_msl = h − N`) so the station heights share
+  the DEM's vertical datum, using a global geoid model (**EGM2008** or
+  **EGM96**) via GDAL/PROJ. Off by default — leave it off if your heights are
+  already orthometric.
 - **Sea-level clamp** — negative elevations in the terrain tiles (sea/lake
   bathymetry) are clamped to 0 m by default, preventing unrealistic ZTD
   inflation below sea level.
@@ -138,6 +145,12 @@ COMO,9.085,45.808,290.0,2.3105
 Extra columns (e.g. a station name) are ignored. Column names are auto-detected;
 if detection fails you can map columns manually in the panel.
 
+**Height datum.** The DEM is orthometric (mean sea level), so the station
+heights must be too. GNSS heights are usually *ellipsoidal* — if so, tick
+**"Heights are ellipsoidal (WGS-84)"** and the plugin converts them to mean sea
+level before processing (see §2). If your `height` column is already orthometric,
+leave it unticked.
+
 **Multiple epochs.** A file may hold several ZTD columns (e.g. `ZTD1, ZTD2, …`,
 one per epoch). Tick *"Time series"* and select which columns to process; blank
 cells are treated as a missing station for that epoch only.
@@ -148,7 +161,9 @@ cells are treated as a missing station for that epoch only.
 
 1. **GNSS ZTD observations** — browse to your file, pick a delimiter (or leave
    *auto*), click **Read columns** and confirm the `lon / lat / height / ZTD`
-   mapping. For multi-epoch files, tick **Time series**, choose the ZTD epoch
+   mapping. If the heights are ellipsoidal, tick **"Heights are ellipsoidal
+   (WGS-84)"** and pick a geoid model (EGM2008 / EGM96) to convert them to mean
+   sea level. For multi-epoch files, tick **Time series**, choose the ZTD epoch
    columns, and (optionally) enable **APS difference maps** with a reference
    epoch.
 2. **DEM** — choose one of: *Download automatically* (set a target resolution,
@@ -254,8 +269,11 @@ the DEM download, projection and raster writing using QGIS’s own Python:
   large areas spanning multiple zones, accuracy near the edges may degrade
   slightly.
 - **Heights** are scaled to `[0, 1]` over the combined station + DEM range, as in
-  the paper; the difference between EGM96/EGM2008 height systems affects the ZTD
-  by < 1 mm and is neglected.
+  the paper. Station and DEM heights must share a vertical datum: if the stations
+  are ellipsoidal, enable the **ellipsoidal → MSL conversion** (§2), otherwise a
+  geoid-undulation offset of tens of metres would systematically bias the
+  stratified model. The choice *between* geoid models (EGM96 vs EGM2008) changes
+  the result by < 1 mm and can be made freely.
 - The **ITD** method is heavier than AITD; on very fine DEMs prefer AITD (the
   paper’s recommended method) or use a coarser DEM resolution for ITD.
 - DEM tiles come from the AWS Terrain Tiles open dataset (SRTM/ASTER/others,
