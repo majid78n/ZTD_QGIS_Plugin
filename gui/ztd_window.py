@@ -619,6 +619,13 @@ class ZtdMainWindow(QDialog):
         if self.cb_load.isChecked():
             self._load_outputs(self.task.outputs)
         self._reset_buttons()
+        sr = getattr(self.task, "station_resolution", None) or {}
+        if sr.get("n") and sr.get("mean_nn") == sr.get("mean_nn"):  # not NaN
+            self._append_bold(
+                "GNSS station resolution: %.2f km  (mean nearest-neighbour; "
+                "median %.2f km, range %.2f-%.2f km, %d stations)"
+                % (sr["mean_nn"], sr["median_nn"], sr["min_nn"],
+                   sr["max_nn"], sr["n"]))
         self._msg("ZTD maps generated successfully.", warn=False)
 
     def _on_terminated(self):
@@ -739,6 +746,11 @@ class ZtdMainWindow(QDialog):
     # ------------------------------------------------------------------ #
     def _append(self, text):
         self.log.appendPlainText(text)
+
+    def _append_bold(self, text):
+        """Append a line rendered in bold (QPlainTextEdit supports HTML blocks)."""
+        import html
+        self.log.appendHtml("<b>" + html.escape(text) + "</b>")
 
     def _msg(self, text, warn=False):
         level = Qgis.Warning if warn else Qgis.Info

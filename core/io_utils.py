@@ -365,6 +365,48 @@ def write_points(path, lon, lat, fields=None, layer_name="stations", epsg=4326):
     return path
 
 
+def nearest_neighbor_distances(x, y):
+    """Distance from each point to its nearest other point, in the input units.
+
+    ``x``/``y`` are coordinates in a metric CRS (metres). Brute-force pairwise,
+    which is fine for typical GNSS networks (up to a few thousand stations).
+    Returns an empty array when there are fewer than two points.
+    """
+    x = np.asarray(x, float)
+    y = np.asarray(y, float)
+    if x.size < 2:
+        return np.array([])
+    d2 = (x[:, None] - x[None, :]) ** 2 + (y[:, None] - y[None, :]) ** 2
+    np.fill_diagonal(d2, np.inf)
+    return np.sqrt(d2.min(axis=1))
+
+
+def station_resolution(x, y):
+    """Effective spatial resolution of an irregular network from inter-station
+    distances.
+
+    ``x``/``y`` are metric coordinates (metres). Returns a dict (in metres)::
+
+        {"n": <station count>, "mean_nn", "median_nn", "min_nn", "max_nn"}
+
+    where the ``*_nn`` values summarise the nearest-neighbour distance of every
+    station. ``mean_nn`` is the headline "resolution".
+    """
+    nn = nearest_neighbor_distances(x, y)
+    n = int(np.size(x))
+    if nn.size == 0:
+        nan = float("nan")
+        return {"n": n, "mean_nn": nan, "median_nn": nan,
+                "min_nn": nan, "max_nn": nan}
+    return {
+        "n": n,
+        "mean_nn": float(np.mean(nn)),
+        "median_nn": float(np.median(nn)),
+        "min_nn": float(np.min(nn)),
+        "max_nn": float(np.max(nn)),
+    }
+
+
 def haversine_spacing_m(lat_deg):
     """Approximate metres-per-degree at a given latitude (for grid sizing)."""
     lat = math.radians(lat_deg)

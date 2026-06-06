@@ -83,6 +83,7 @@ class AitdTask(QgsTask):
         self.exception = None
         self.message = ""
         self.summary = {}
+        self.station_resolution = {}   # nearest-neighbour stats (km)
 
     # ------------------------------------------------------------------ #
     def _progress(self, frac, msg):
@@ -204,6 +205,21 @@ class AitdTask(QgsTask):
         sx, sy, epsg = pj.to_metric(lon, lat)
         dx, dy, _ = pj.to_metric(dlon, dlat, dst_epsg=epsg)
         self._log(f"Working metric CRS: EPSG:{epsg}")
+
+        # Effective resolution of the irregular GNSS network, from the
+        # nearest-neighbour distance between stations (metres -> km).
+        res = io.station_resolution(sx, sy)
+        self.station_resolution = {
+            k: (v / 1000.0 if k != "n" else v) for k, v in res.items()}
+        if np.isfinite(self.station_resolution["mean_nn"]):
+            self._log(
+                "GNSS station resolution (mean nearest-neighbour): %.2f km "
+                "(median %.2f km, range %.2f-%.2f km, %d stations)."
+                % (self.station_resolution["mean_nn"],
+                   self.station_resolution["median_nn"],
+                   self.station_resolution["min_nn"],
+                   self.station_resolution["max_nn"],
+                   self.station_resolution["n"]))
 
         # --- 5. scale heights (shared scale) --------------------------- #
         all_h = np.concatenate([height, delev[finite]])
