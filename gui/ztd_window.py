@@ -25,6 +25,7 @@ from qgis.core import (
 )
 
 from ..core import io_utils as io
+from ..core import geoid as ge
 from ..workers.aitd_task import AitdTask, planned_output_files
 
 
@@ -105,6 +106,25 @@ class ZtdMainWindow(QDialog):
             self._mapping_combos[key] = cb
             grid.addWidget(cb, i // 2, (i % 2) * 2 + 1)
         lay.addLayout(grid)
+
+        # --- vertical datum of the station heights --------------------- #
+        hrow = QHBoxLayout()
+        self.cb_ellipsoidal = QCheckBox(
+            "Heights are ellipsoidal (WGS-84) - convert to mean sea level")
+        self.cb_ellipsoidal.setToolTip(
+            "GNSS heights are usually ellipsoidal, but DEM elevations are "
+            "orthometric (above mean sea level). Tick this to subtract the "
+            "geoid undulation so the station heights share the DEM's datum.")
+        self.cb_ellipsoidal.toggled.connect(
+            lambda on: self.geoid_combo.setEnabled(on))
+        hrow.addWidget(self.cb_ellipsoidal)
+        hrow.addWidget(QLabel("geoid:"))
+        self.geoid_combo = QComboBox()
+        self.geoid_combo.addItems(ge.available_models())
+        self.geoid_combo.setEnabled(False)
+        hrow.addWidget(self.geoid_combo)
+        hrow.addStretch(1)
+        lay.addLayout(hrow)
 
         # --- time-series (multi-epoch) controls ------------------------ #
         self.cb_timeseries = QCheckBox(
@@ -512,6 +532,8 @@ class ZtdMainWindow(QDialog):
         return {
             "ztd_path": ztd_path,
             "mapping": mapping,
+            "height_is_ellipsoidal": self.cb_ellipsoidal.isChecked(),
+            "geoid_model": self.geoid_combo.currentText(),
             "ztd_columns": ztd_columns,
             "epoch_names": epoch_names,
             "make_aps": make_aps,

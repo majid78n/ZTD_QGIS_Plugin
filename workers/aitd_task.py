@@ -24,6 +24,7 @@ from qgis.core import QgsTask, QgsMessageLog, Qgis
 
 from ..core import decomposition as dc
 from ..core import dem_downloader as dd
+from ..core import geoid as ge
 from ..core import io_utils as io
 from ..core import projection as pj
 
@@ -122,6 +123,29 @@ class AitdTask(QgsTask):
                   % (lon.size, len(epoch_names), ", ".join(epoch_names)))
         if self.isCanceled():
             return False
+
+        # --- 1b. ellipsoidal -> orthometric height -------------------- #
+        # DEM elevations are orthometric (above mean sea level); if the station
+        # heights are ellipsoidal they must be converted to the same datum
+        # before scaling and decomposition (H_msl = h - geoid undulation).
+        if p.get("height_is_ellipsoidal"):
+            model = p.get("geoid_model") or "EGM2008"
+            self._progress(0.03, "Converting ellipsoidal heights to MSL")
+            try:
+                ortho = ge.ellipsoidal_to_orthometric(lon, lat, height, model)
+            except Exception as exc:
+                raise RuntimeError(
+                    "Could not convert ellipsoidal heights to mean sea level "
+                    "using %s: %s. Untick 'Heights are ellipsoidal' if your "
+                    "heights are already orthometric, or install the geoid "
+                    "grid for PROJ." % (model, exc))
+            undulation = height - ortho
+            self._log(
+                "Converted ellipsoidal heights to orthometric (%s): geoid "
+                "undulation mean %.2f m (range %.2f .. %.2f m)."
+                % (model, float(np.nanmean(undulation)),
+                   float(np.nanmin(undulation)), float(np.nanmax(undulation))))
+            height = ortho
 
         # --- 2. bounding box ------------------------------------------- #
         bbox = io.bounding_box(lon, lat, margin_deg=p.get("margin_deg", 0.1))
